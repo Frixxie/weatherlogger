@@ -1,5 +1,5 @@
 [package]
-name = "log_weather_rust"
+name = "weatherlogger"
 version = "0.1.0"
 authors = ["Frixxie <freddahf@outlook.com>"]
 edition = "2018"
