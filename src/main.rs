@@ -24,17 +24,15 @@ fn main() {
         let v: Value = serde_json::from_str(res.as_str()).unwrap();
 
         println!(
-            "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
+            "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
             v["dt"],
             v["name"],
             v["sys"]["country"],
             v["coord"]["lon"],
             v["coord"]["lat"],
-            v["weather"][0]["id"],
             v["weather"][0]["main"],
             v["weather"][0]["description"],
             v["weather"][0]["icon"],
-            v["base"],
             v["sys"]["sunrise"],
             v["sys"]["sunset"],
             v["clouds"]["all"],
@@ -49,9 +47,7 @@ fn main() {
             v["main"]["temp_min"],
             v["main"]["temp_max"],
             v["main"]["temp"],
-            v["main"]["sea_level"],
-            v["main"]["grnd_level"],
-            v["main"]["feel_like"], 
+            v["main"]["feels_like"], 
             v["main"]["humidity"],
             v["main"]["pressure"],
         );
