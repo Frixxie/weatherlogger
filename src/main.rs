@@ -2,7 +2,8 @@ extern crate reqwest;
 use serde_json::Value;
 use std::fs;
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), reqwest::Error> {
     let locs = fs::read_to_string("/home/fredrik/projects/weather/locations").unwrap();
     let api = fs::read_to_string("/home/fredrik/projects/weather/openweather-api").unwrap();
 
@@ -17,11 +18,11 @@ fn main() {
             loc, api
         );
 
-        let res = reqwest::get(url.as_str()).unwrap().text().unwrap();
+        let res = reqwest::get(url.as_str()).await.unwrap().text().await.unwrap();
 
         //println!("{}", res);
 
-        let v: Value = serde_json::from_str(res.as_str()).unwrap();
+        let v: Value = serde_json::from_str(&res).unwrap();
 
         println!(
             "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
@@ -47,7 +48,7 @@ fn main() {
             v["main"]["temp_min"],
             v["main"]["temp_max"],
             v["main"]["temp"],
-            v["main"]["feels_like"], 
+            v["main"]["feels_like"],
             v["main"]["humidity"],
             v["main"]["pressure"],
         );
@@ -55,4 +56,5 @@ fn main() {
     }
 
     //println!("{:#?}", res);
+    Ok(())
 }
