@@ -18,7 +18,12 @@ async fn main() -> Result<(), reqwest::Error> {
             loc, api
         );
 
-        let res = reqwest::get(url.as_str()).await.unwrap().text().await.unwrap();
+        let res = reqwest::get(url.as_str())
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
 
         //println!("{}", res);
 
@@ -52,7 +57,6 @@ async fn main() -> Result<(), reqwest::Error> {
             v["main"]["humidity"],
             v["main"]["pressure"],
         );
-
     }
 
     //println!("{:#?}", res);
