@@ -4,8 +4,8 @@ use std::fs;
 
 #[tokio::main]
 async fn main() -> Result<(), reqwest::Error> {
-    let locs = fs::read_to_string("/home/fredrik/projects/weather/locations").unwrap();
-    let api = fs::read_to_string("/home/fredrik/projects/weather/openweather-api").unwrap();
+    let locs = fs::read_to_string("/home/fredrik/projects/weather/location").unwrap();
+    let api = fs::read_to_string("/home/fredrik/projects/weather/apikey").unwrap();
 
     locs.trim_matches(char::is_control).to_string();
     api.trim_matches(char::is_control).to_string();
@@ -30,7 +30,7 @@ async fn main() -> Result<(), reqwest::Error> {
         let v: Value = serde_json::from_str(&res).unwrap();
 
         println!(
-            "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
+            "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
             v["dt"],
             v["name"],
             v["sys"]["country"],
@@ -44,7 +44,6 @@ async fn main() -> Result<(), reqwest::Error> {
             v["clouds"]["all"],
             v["wind"]["speed"],
             v["wind"]["deg"],
-            v["clouds"]["all"],
             v["visibility"],
             v["rain"]["1h"],
             v["rain"]["3h"],
