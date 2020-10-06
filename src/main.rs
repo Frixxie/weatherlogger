@@ -4,20 +4,24 @@ use std::fs;
 
 #[tokio::main]
 async fn main() -> Result<(), reqwest::Error> {
+    //reading in loc and apikey
     let locs = fs::read_to_string("/home/fredrik/projects/weather/location").unwrap();
     let api = fs::read_to_string("/home/fredrik/projects/weather/apikey").unwrap();
 
+    //trimming
     locs.trim_matches(char::is_control).to_string();
     api.trim_matches(char::is_control).to_string();
 
+    //looping through locs
     for loc in locs.split_whitespace() {
-        //println!("{}", loc);
 
+        //url formatting
         let url = format!(
             "https://api.openweathermap.org/data/2.5/weather?q={}&units=metric&appid={}",
             loc, api
         );
 
+        //getting results
         let res = reqwest::get(url.as_str())
             .await
             .unwrap()
@@ -25,8 +29,7 @@ async fn main() -> Result<(), reqwest::Error> {
             .await
             .unwrap();
 
-        //println!("{}", res);
-
+        //converting to json
         let v: Value = serde_json::from_str(&res).unwrap();
 
         println!(
@@ -58,6 +61,5 @@ async fn main() -> Result<(), reqwest::Error> {
         );
     }
 
-    //println!("{:#?}", res);
     Ok(())
 }
