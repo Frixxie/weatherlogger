@@ -2,8 +2,7 @@ extern crate reqwest;
 use serde_json::Value;
 use std::fs;
 
-#[tokio::main]
-async fn main() -> Result<(), reqwest::Error> {
+fn main() {
     //reading in loc and apikey
     let locs = fs::read_to_string("/home/fredrik/projects/weather/location").unwrap();
     let api = fs::read_to_string("/home/fredrik/projects/weather/apikey").unwrap();
@@ -22,11 +21,9 @@ async fn main() -> Result<(), reqwest::Error> {
         );
 
         //getting results
-        let res = reqwest::get(url.as_str())
-            .await
+        let res = reqwest::blocking::get(url.as_str())
             .unwrap()
             .text()
-            .await
             .unwrap();
 
         //converting to json
@@ -61,5 +58,4 @@ async fn main() -> Result<(), reqwest::Error> {
         );
     }
 
-    Ok(())
 }
