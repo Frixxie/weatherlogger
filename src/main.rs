@@ -1,8 +1,8 @@
-extern crate reqwest;
+use reqwest::blocking::Client;
 use serde_json::Value;
 use std::fs;
 
-fn get_weather(api: &str, loc: &str, client: &reqwest::blocking::Client) -> String {
+fn get_weather(api: &str, loc: &str, client: &Client) -> String {
     let url = format!(
         "https://api.openweathermap.org/data/2.5/weather?q={}&units=metric&appid={}",
         loc, api
@@ -51,7 +51,7 @@ fn main() {
     locs.trim_matches(char::is_control).to_string();
     api.trim_matches(char::is_control).to_string();
 
-    let client = reqwest::blocking::Client::new();
+    let client = Client::new();
 
     //looping through locs
     for loc in locs.split_whitespace() {
