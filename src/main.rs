@@ -2,34 +2,17 @@ extern crate reqwest;
 use serde_json::Value;
 use std::fs;
 
-fn main() {
-    //reading in loc and apikey
-    let locs = fs::read_to_string("/home/fredrik/projects/weather/location").unwrap();
-    let api = fs::read_to_string("/home/fredrik/projects/weather/apikey").unwrap();
+fn get_weather(api: &str, loc: &str, client: &reqwest::blocking::Client) -> String {
+    let url = format!(
+        "https://api.openweathermap.org/data/2.5/weather?q={}&units=metric&appid={}",
+        loc, api
+    );
+    let response = client.get(&url).send().unwrap().text().unwrap();
 
-    //trimming
-    locs.trim_matches(char::is_control).to_string();
-    api.trim_matches(char::is_control).to_string();
+    //converting to json so it can be printed
+    let v: Value = serde_json::from_str(&response).unwrap();
 
-    //looping through locs
-    for loc in locs.split_whitespace() {
-
-        //url formatting
-        let url = format!(
-            "https://api.openweathermap.org/data/2.5/weather?q={}&units=metric&appid={}",
-            loc, api
-        );
-
-        //getting results
-        let res = reqwest::blocking::get(url.as_str())
-            .unwrap()
-            .text()
-            .unwrap();
-
-        //converting to json
-        let v: Value = serde_json::from_str(&res).unwrap();
-
-        println!(
+    let weather = format!(
             "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
             v["dt"],
             v["name"],
@@ -55,7 +38,23 @@ fn main() {
             v["main"]["feels_like"],
             v["main"]["humidity"],
             v["main"]["pressure"],
-        );
-    }
+    );
+    weather
+}
 
+fn main() {
+    //reading in loc and apikey
+    let locs = fs::read_to_string("/home/fredrik/projects/weather/location").unwrap();
+    let api = fs::read_to_string("/home/fredrik/projects/weather/apikey").unwrap();
+
+    //trimming
+    locs.trim_matches(char::is_control).to_string();
+    api.trim_matches(char::is_control).to_string();
+
+    let client = reqwest::blocking::Client::new();
+
+    //looping through locs
+    for loc in locs.split_whitespace() {
+        println!("{}", get_weather(&api, &loc, &client))
+    }
 }
