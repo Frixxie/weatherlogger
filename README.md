@@ -1,4 +1,4 @@
 # weatherlogger
 
-You need an api key from https://openweathermap.org/
-And a file of locations
+You need an apikey from https://openweathermap.org/
+And a optionally a file of locations uses ip location otherwise
