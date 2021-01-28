@@ -3,6 +3,10 @@ use serde_json::Value;
 use std::fs;
 use structopt::StructOpt;
 
+use std::path::PathBuf;
+
+use std::io;
+
 #[derive(Debug, StructOpt)]
 #[structopt(name = "weatherlogger", about = "Logs the weather from openweathermap")]
 struct Opt {
@@ -11,12 +15,12 @@ struct Opt {
     isp_loc: bool,
 
     ///Apikey filename
-    #[structopt(short, long, default_value="apikey")]
-    apikey_file: String,
+    #[structopt(short, long, default_value = "./apikey")]
+    apikey_file: PathBuf,
 
     ///Locations filename
-    #[structopt(short, long, default_value="locations")]
-    locations_file: String,
+    #[structopt(short, long, default_value = "./locations")]
+    locations_file: PathBuf,
 }
 
 fn get_weather(api: &str, loc: &str, client: &Client) -> String {
@@ -69,10 +73,10 @@ fn get_city(url: &str, client: &Client) -> String {
         .to_string()
 }
 
-fn main() {
+fn main() -> Result<(), io::Error> {
     //reading in loc and apikey
     let opt = Opt::from_args();
-    let api = fs::read_to_string(opt.apikey_file).unwrap();
+    let api = fs::read_to_string(opt.apikey_file)?;
 
     //trimming
     api.trim_matches(char::is_control).to_string();
@@ -92,4 +96,6 @@ fn main() {
             println!("{}", get_weather(&api, &loc, &client))
         }
     }
+
+    Ok(())
 }
