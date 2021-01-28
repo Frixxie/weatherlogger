@@ -83,18 +83,19 @@ fn main() -> Result<(), io::Error> {
 
     let client = Client::new();
 
-    if opt.isp_loc {
-        let loc = get_city("http://ip-api.com/line/?fields=city", &client);
-        println!("{}", get_weather(&api, &loc, &client))
+    let locs = if opt.isp_loc {
+        vec![get_city("http://ip-api.com/line/?fields=city", &client)]
     } else {
-        let locs = fs::read_to_string(opt.locations_file)
-            .unwrap()
+        fs::read_to_string(opt.locations_file)?
             .trim_matches(char::is_control)
-            .to_string();
-        //looping through locs
-        for loc in locs.split_whitespace() {
-            println!("{}", get_weather(&api, &loc, &client))
-        }
+            .to_string()
+            .split_whitespace()
+            .map(|s| s.to_owned())
+            .collect()
+    };
+
+    for loc in locs {
+        println!("{}", get_weather(&api, &loc, &client))
     }
 
     Ok(())
