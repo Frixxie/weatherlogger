@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use std::io;
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "weatherlogger", about = "Logs the weather from openweathermap")]
+#[structopt(name = "weatherlogger", about = "Logs the weather from https://openweathermap.com")]
 struct Opt {
     ///Use isp location
     #[structopt(short, long)]
