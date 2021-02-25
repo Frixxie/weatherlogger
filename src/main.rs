@@ -1,6 +1,7 @@
 use reqwest;
 use serde_json::Value;
 use tokio::fs;
+use tokio_stream::StreamExt;
 use structopt::StructOpt;
 
 use std::path::PathBuf;
@@ -88,9 +89,11 @@ async fn main() -> Result<(), io::Error> {
             .map(|s| s.to_owned())
             .collect()
     };
-
-    for loc in locs {
-        println!("{}", get_weather(&api, &loc).await);
+    let mut stream = tokio_stream::iter(&locs);
+    while let Some(loc) = stream.next().await {
+        let api_clone = api.clone();
+        println!("{}", get_weather(&api_clone, &loc).await);
     }
+
     Ok(())
 }
