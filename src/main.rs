@@ -1,4 +1,4 @@
-use reqwest::blocking::Client;
+use reqwest;
 use serde_json::Value;
 use std::fs;
 use structopt::StructOpt;
@@ -8,7 +8,10 @@ use std::path::PathBuf;
 use std::io;
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "weatherlogger", about = "Logs the weather from https://openweathermap.com")]
+#[structopt(
+    name = "weatherlogger",
+    about = "Logs the weather from https://openweathermap.com"
+)]
 struct Opt {
     ///Use isp location
     #[structopt(short, long)]
@@ -23,12 +26,12 @@ struct Opt {
     locations_file: PathBuf,
 }
 
-fn get_weather(api: &str, loc: &str, client: &Client) -> String {
+async fn get_weather(api: &str, loc: &str) -> String {
     let url = format!(
         "https://api.openweathermap.org/data/2.5/weather?q={}&units=metric&appid={}",
         loc, api
     );
-    let response = client.get(&url).send().unwrap().text().unwrap();
+    let response = reqwest::get(&url).await.unwrap().text().await.unwrap();
 
     //converting to json so it can be printed
     let v: Value = serde_json::from_str(&response).unwrap();
@@ -62,18 +65,12 @@ fn get_weather(api: &str, loc: &str, client: &Client) -> String {
     )
 }
 
-fn get_city(url: &str, client: &Client) -> String {
-    client
-        .get(url)
-        .send()
-        .unwrap()
-        .text()
-        .unwrap()
-        .trim_matches(char::is_control)
-        .to_string()
+async fn get_city(url: &str) -> String {
+    reqwest::get(url).await.unwrap().text().await.unwrap()
 }
 
-fn main() -> Result<(), io::Error> {
+#[tokio::main]
+async fn main() -> Result<(), io::Error> {
     //reading in loc and apikey
     let opt = Opt::from_args();
     let api = fs::read_to_string(opt.apikey_file)?;
@@ -81,10 +78,8 @@ fn main() -> Result<(), io::Error> {
     //trimming
     api.trim_matches(char::is_control).to_string();
 
-    let client = Client::new();
-
     let locs = if opt.isp_loc {
-        vec![get_city("http://ip-api.com/line/?fields=city", &client)]
+        vec![get_city("http://ip-api.com/line/?fields=city").await]
     } else {
         fs::read_to_string(opt.locations_file)?
             .trim_matches(char::is_control)
@@ -95,8 +90,7 @@ fn main() -> Result<(), io::Error> {
     };
 
     for loc in locs {
-        println!("{}", get_weather(&api, &loc, &client))
+        println!("{}", get_weather(&api, &loc).await);
     }
-
     Ok(())
 }
