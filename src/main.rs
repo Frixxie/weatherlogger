@@ -1,8 +1,8 @@
 use reqwest;
 use serde_json::Value;
+use structopt::StructOpt;
 use tokio::fs;
 use tokio_stream::StreamExt;
-use structopt::StructOpt;
 
 use std::path::PathBuf;
 
@@ -70,28 +70,33 @@ async fn get_city(url: &str) -> String {
     reqwest::get(url).await.unwrap().text().await.unwrap()
 }
 
-#[tokio::main]
-async fn main() -> Result<(), io::Error> {
-    //reading in loc and apikey
-    let opt = Opt::from_args();
-    let api = fs::read_to_string(opt.apikey_file).await?;
-
-    //trimming
-    api.trim_matches(char::is_control).to_string();
-
-    let locs = if opt.isp_loc {
+async fn get_locs(isp_loc: bool, loc_f: PathBuf) -> Vec<String> {
+    if isp_loc {
         vec![get_city("http://ip-api.com/line/?fields=city").await]
     } else {
-        fs::read_to_string(opt.locations_file).await?
+        fs::read_to_string(loc_f)
+            .await
+            .unwrap()
             .trim_matches(char::is_control)
             .to_string()
             .split_whitespace()
             .map(|s| s.to_owned())
             .collect()
-    };
+    }
+}
+
+#[tokio::main]
+async fn main() -> Result<(), io::Error> {
+    //reading in loc and apikey
+    let opt = Opt::from_args();
+
+    let (api, locs) = tokio::join!(fs::read_to_string(opt.apikey_file), get_locs(opt.isp_loc, opt.locations_file));
+    //trimming
+    let new_api = api.unwrap().trim_matches(char::is_control).to_string();
+
     let mut stream = tokio_stream::iter(&locs);
     while let Some(loc) = stream.next().await {
-        let api_clone = api.clone();
+        let api_clone = new_api.clone();
         println!("{}", get_weather(&api_clone, &loc).await);
     }
 
