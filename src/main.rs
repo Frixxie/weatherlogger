@@ -1,6 +1,6 @@
 use reqwest;
 use serde_json::Value;
-use std::fs;
+use tokio::fs;
 use structopt::StructOpt;
 
 use std::path::PathBuf;
@@ -73,7 +73,7 @@ async fn get_city(url: &str) -> String {
 async fn main() -> Result<(), io::Error> {
     //reading in loc and apikey
     let opt = Opt::from_args();
-    let api = fs::read_to_string(opt.apikey_file)?;
+    let api = fs::read_to_string(opt.apikey_file).await?;
 
     //trimming
     api.trim_matches(char::is_control).to_string();
@@ -81,7 +81,7 @@ async fn main() -> Result<(), io::Error> {
     let locs = if opt.isp_loc {
         vec![get_city("http://ip-api.com/line/?fields=city").await]
     } else {
-        fs::read_to_string(opt.locations_file)?
+        fs::read_to_string(opt.locations_file).await?
             .trim_matches(char::is_control)
             .to_string()
             .split_whitespace()
