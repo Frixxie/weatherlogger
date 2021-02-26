@@ -2,7 +2,6 @@ use reqwest;
 use serde_json::Value;
 use structopt::StructOpt;
 use tokio::fs;
-use tokio_stream::StreamExt;
 
 use std::path::PathBuf;
 
@@ -27,7 +26,7 @@ struct Opt {
     locations_file: PathBuf,
 }
 
-async fn get_weather(api: &str, loc: &str) -> String {
+async fn get_weather(api: &str, loc: &str) {
     let url = format!(
         "https://api.openweathermap.org/data/2.5/weather?q={}&units=metric&appid={}",
         loc, api
@@ -37,7 +36,7 @@ async fn get_weather(api: &str, loc: &str) -> String {
     //converting to json so it can be printed
     let v: Value = serde_json::from_str(&response).unwrap();
 
-    format!(
+    println!(
         "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
         v["dt"],
         v["name"],
@@ -90,14 +89,23 @@ async fn main() -> Result<(), io::Error> {
     //reading in loc and apikey
     let opt = Opt::from_args();
 
-    let (api, locs) = tokio::join!(fs::read_to_string(opt.apikey_file), get_locs(opt.isp_loc, opt.locations_file));
+    let (api, locs) = tokio::join!(
+        fs::read_to_string(opt.apikey_file),
+        get_locs(opt.isp_loc, opt.locations_file)
+    );
     //trimming
     let new_api = api.unwrap().trim_matches(char::is_control).to_string();
 
-    let mut stream = tokio_stream::iter(&locs);
-    while let Some(loc) = stream.next().await {
+    let mut futures = Vec::new();
+    for loc in locs {
         let api_clone = new_api.clone();
-        println!("{}", get_weather(&api_clone, &loc).await);
+        futures.push(tokio::spawn(
+            async move { get_weather(&api_clone, &loc).await },
+        ));
+    }
+
+    for future in futures {
+        future.await?;
     }
 
     Ok(())
