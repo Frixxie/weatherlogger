@@ -89,21 +89,26 @@ async fn main() -> Result<(), io::Error> {
     //reading in loc and apikey
     let opt = Opt::from_args();
 
+    //reading in api and locs
     let (api, locs) = tokio::join!(
         fs::read_to_string(opt.apikey_file),
         get_locs(opt.isp_loc, opt.locations_file)
     );
+
     //trimming
     let new_api = api.unwrap().trim_matches(char::is_control).to_string();
 
+    //vector for containing the join_handles spawned from the tokio threads
     let mut futures = Vec::new();
     for loc in locs {
+        //needed for move
         let api_clone = new_api.clone();
         futures.push(tokio::spawn(
             async move { get_weather(&api_clone, &loc).await },
         ));
     }
 
+    //getting the results or something
     for future in futures {
         future.await?;
     }
