@@ -1,4 +1,4 @@
-use reqwest;
+use reqwest::get;
 use serde_json::Value;
 use structopt::StructOpt;
 use tokio::fs;
@@ -31,7 +31,7 @@ async fn get_weather(api: &str, loc: &str) {
         "https://api.openweathermap.org/data/2.5/weather?q={}&units=metric&appid={}",
         loc, api
     );
-    let response = reqwest::get(&url).await.unwrap().text().await.unwrap();
+    let response = get(&url).await.unwrap().text().await.unwrap();
 
     //converting to json so it can be printed
     let v: Value = serde_json::from_str(&response).unwrap();
@@ -66,7 +66,7 @@ async fn get_weather(api: &str, loc: &str) {
 }
 
 async fn get_city(url: &str) -> String {
-    reqwest::get(url).await.unwrap().text().await.unwrap()
+    get(url).await.unwrap().text().await.unwrap()
 }
 
 async fn get_locs(isp_loc: bool, loc_f: PathBuf) -> Vec<String> {
