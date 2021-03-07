@@ -2,6 +2,7 @@ use reqwest::get;
 use serde_json::Value;
 use structopt::StructOpt;
 use tokio::fs;
+mod weather;
 
 use std::path::PathBuf;
 
@@ -112,6 +113,8 @@ async fn main() -> Result<(), io::Error> {
     for future in futures {
         future.await?;
     }
+
+    //let weather: Vec::<parse_csv::Weather> = parse_csv::Weather::new("weather_log.csv");
 
     Ok(())
 }
