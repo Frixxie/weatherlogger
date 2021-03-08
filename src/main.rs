@@ -118,11 +118,5 @@ async fn main() -> Result<(), io::Error> {
         println!("{}", res);
     }
 
-    let weather: Vec::<weather::Weather> = weather::Weather::read_from_csv("weather_log.csv");
-
-    for res in weather {
-        println!("{}", res);
-    }
-
     Ok(())
 }
