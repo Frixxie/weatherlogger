@@ -1,0 +1,2 @@
+dt,name,country,lon,lat,main,desc,icon,sunrise,sunset,clouds,wind_speed,wind_deg,visibility,rain_1h,rain_3h,snow_1h,snow_3h,temp_min,temp_max,temp,feels_like,humidity,pressure
+1615067637,"Tromsø","NO",18.957,69.6496,"Snow","snow","13n",1615009623,1615046646,90,2.57,170,1100,0,0,0.57,0,-6,-5.56,-5.77,-10.35,93,999

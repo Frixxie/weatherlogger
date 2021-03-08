@@ -27,7 +27,7 @@ struct Opt {
     locations_file: PathBuf,
 }
 
-async fn get_weather(api: &str, loc: &str) {
+async fn get_weather(api: &str, loc: &str) -> weather::Weather {
     let url = format!(
         "https://api.openweathermap.org/data/2.5/weather?q={}&units=metric&appid={}",
         loc, api
@@ -37,32 +37,31 @@ async fn get_weather(api: &str, loc: &str) {
     //converting to json so it can be printed
     let v: Value = serde_json::from_str(&response).unwrap();
 
-    println!(
-        "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
-        v["dt"],
-        v["name"],
-        v["sys"]["country"],
-        v["coord"]["lon"],
-        v["coord"]["lat"],
-        v["weather"][0]["main"],
-        v["weather"][0]["description"],
-        v["weather"][0]["icon"],
-        v["sys"]["sunrise"],
-        v["sys"]["sunset"],
-        v["clouds"]["all"],
-        v["wind"]["speed"],
-        v["wind"]["deg"],
-        v["visibility"],
-        v["rain"]["1h"],
-        v["rain"]["3h"],
-        v["snow"]["1h"],
-        v["snow"]["3h"],
-        v["main"]["temp_min"],
-        v["main"]["temp_max"],
-        v["main"]["temp"],
-        v["main"]["feels_like"],
-        v["main"]["humidity"],
-        v["main"]["pressure"],
+    weather::Weather::new(
+        v["dt"].as_u64().unwrap_or(0) as u32,
+        v["name"].to_string(),
+        v["sys"]["country"].to_string(),
+        v["coord"]["lon"].as_f64().unwrap_or(0.0) as f32,
+        v["coord"]["lat"].as_f64().unwrap_or(0.0) as f32,
+        v["weather"][0]["main"].to_string(),
+        v["weather"][0]["description"].to_string(),
+        v["weather"][0]["icon"].to_string(),
+        v["sys"]["sunrise"].as_u64().unwrap_or(0) as u32,
+        v["sys"]["sunset"].as_u64().unwrap_or(0) as u32,
+        v["clouds"]["all"].as_u64().unwrap_or(0) as u32,
+        v["wind"]["speed"].as_f64().unwrap_or(0.0) as f32,
+        v["wind"]["deg"].as_i64().unwrap_or(0) as i32,
+        v["visibility"].as_i64().unwrap_or(0) as i32,
+        v["rain"]["1h"].as_f64().unwrap_or(0.0) as f32,
+        v["rain"]["3h"].as_f64().unwrap_or(0.0) as f32,
+        v["snow"]["1h"].as_f64().unwrap_or(0.0) as f32,
+        v["snow"]["3h"].as_f64().unwrap_or(0.0) as f32,
+        v["main"]["temp_min"].as_f64().unwrap_or(0.0) as f32,
+        v["main"]["temp_max"].as_f64().unwrap_or(0.0) as f32,
+        v["main"]["temp"].as_f64().unwrap_or(0.0) as f32,
+        v["main"]["feels_like"].as_f64().unwrap_or(0.0) as f32,
+        v["main"]["humidity"].as_u64().unwrap_or(0) as u32,
+        v["main"]["pressure"].as_u64().unwrap_or(0) as u32,
     )
 }
 
@@ -109,12 +108,21 @@ async fn main() -> Result<(), io::Error> {
         ));
     }
 
+    let mut reses = Vec::<weather::Weather>::new();
     //getting the results or something
     for future in futures {
-        future.await?;
+        reses.push(future.await?);
     }
 
-    //let weather: Vec::<parse_csv::Weather> = parse_csv::Weather::new("weather_log.csv");
+    for res in reses {
+        println!("{}", res);
+    }
+
+    let weather: Vec::<weather::Weather> = weather::Weather::read_from_csv("weather_log.csv");
+
+    for res in weather {
+        println!("{}", res);
+    }
 
     Ok(())
 }
