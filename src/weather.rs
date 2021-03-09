@@ -1,7 +1,7 @@
 use csv::Reader;
 use serde::Deserialize;
-use std::fmt;
 use std::cmp::PartialEq;
+use std::fmt;
 
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct Weather {
@@ -83,6 +83,73 @@ impl Weather {
             feels_like,
             humidity,
             pressure,
+        }
+    }
+
+    pub fn create_db_table(db: &str) {
+        let connection = sqlite::open(db).unwrap();
+        connection.execute(
+            "CREATE TABLE weather (
+            dt INTEGER,
+            name TEXT,
+            country TEXT,
+            lon FLOAT,
+            lat FLOAT,
+            main TEXT,
+            desc TEXT,
+            icon TEXT,
+            sunrise INTEGER,
+            sunset INTEGER,
+            clouds INTEGER,
+            wind_speed FLOAT,
+            wind_deg INTEGER,
+            visibility INTEGER,
+            rain_1h FLOAT,
+            rain_3h FLOAT,
+            snow_1h FLOAT,
+            snow_3h FLOAT,
+            temp_min FLOAT,
+            temp_max FLOAT,
+            temp FLOAT,
+            feels_like FLOAT,
+            humidity INTEGER,
+            pressure INTEGER
+            );",
+        ).unwrap();
+    }
+
+    pub fn populate_db(csvfile: &str, db: &str) {
+        let weather = Weather::read_from_csv(csvfile);
+        let connection = sqlite::open(db).unwrap();
+        for res in weather {
+            connection.execute(
+                format!("INSERT INTO weather (
+                dt,
+                name,
+                country,
+                lon,
+                lat,
+                main,
+                desc,
+                icon,
+                sunrise,
+                sunset,
+                clouds,
+                wind_speed,
+                wind_deg,
+                visibility,
+                rain_1h,
+                rain_3h,
+                snow_1h,
+                snow_3h,
+                temp_min,
+                temp_max,
+                temp,
+                feels_like,
+                humidity,
+                pressure,
+                ) VALUES {}", res)
+            ).unwrap();
         }
     }
 
