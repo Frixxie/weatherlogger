@@ -4,9 +4,9 @@ use structopt::StructOpt;
 use tokio::fs;
 mod weather;
 
-use std::path::PathBuf;
-
 use std::io;
+
+use std::path::PathBuf;
 
 #[derive(Debug, StructOpt)]
 #[structopt(
@@ -114,7 +114,7 @@ async fn main() -> Result<(), io::Error> {
         reses.push(future.await?);
     }
 
-    for res in reses {
+    for res in &reses {
         println!("{}", res);
     }
 
