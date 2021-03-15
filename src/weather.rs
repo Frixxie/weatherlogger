@@ -87,11 +87,11 @@ impl Weather {
         }
     }
 
-    pub fn create_db_table(db: PathBuf) {
+    pub fn create_db_table(db: &PathBuf) {
         let connection = sqlite::open(db).unwrap();
         connection
             .execute(
-                "CREATE TABLE weather (
+                "CREATE TABLE if not exists weather (
                 dt INTEGER,
                 name TEXT,
                 country TEXT,
@@ -121,45 +121,15 @@ impl Weather {
             .unwrap();
     }
 
-    pub fn populate_db(csvfile: PathBuf, db: PathBuf) {
+    pub fn populate_db(csvfile: &PathBuf, db: &PathBuf) {
         let weather = Weather::read_from_csv(csvfile);
         let connection = sqlite::open(db).unwrap();
         for res in weather {
-            connection
-                .execute(format!(
-                    "INSERT INTO weather (
-                    dt,
-                    name,
-                    country,
-                    lon,
-                    lat,
-                    main,
-                    desc,
-                    icon,
-                    sunrise,
-                    sunset,
-                    clouds,
-                    wind_speed,
-                    wind_deg,
-                    visibility,
-                    rain_1h,
-                    rain_3h,
-                    snow_1h,
-                    snow_3h,
-                    temp_min,
-                    temp_max,
-                    temp,
-                    feels_like,
-                    humidity,
-                    pressure,
-                    ) VALUES {}",
-                    res
-                ))
-                .unwrap();
+            connection.execute(format!("INSERT INTO weather (dt, name, country, lon, lat, main, desc, icon, sunrise, sunset, clouds, wind_speed, wind_deg, visibility, rain_1h, rain_3h, snow_1h, snow_3h, temp_min, temp_max, temp, feels_like, humidity, pressure) VALUES ({}, \"{}\", \"{}\", {}, {}, \"{}\", \"{}\", \"{}\", {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {});", res.dt, res.name, res.country, res.lon, res.lat, res.main, res.desc, res.icon, res.sunrise, res.sunset, res.clouds, res.wind_speed, res.wind_deg, res.visibility, res.rain_1h, res.rain_3h, res.snow_1h, res.snow_3h, res.temp_min, res.temp_max, res.temp, res.feels_like, res.humidity, res.pressure)).unwrap();
         }
     }
 
-    pub fn read_from_csv(file: PathBuf) -> Vec<Weather> {
+    pub fn read_from_csv(file: &PathBuf) -> Vec<Weather> {
         let mut rdr = Reader::from_path(file).unwrap();
         let mut res = Vec::<Weather>::new();
         for result in rdr.deserialize() {
@@ -210,8 +180,8 @@ mod tests {
 
     #[test]
     fn test_parse_csvfile() {
-        let file = PathBuf::new().push("weather_log.csv");
-        let reses: Vec<Weather> = Weather::read_from_csv(file);
+        let file = PathBuf::from("weather_log.csv");
+        let reses: Vec<Weather> = Weather::read_from_csv(&file);
         let weather: Weather = Weather::new(
             1615067637,
             "Tromsø".to_string(),
@@ -243,9 +213,9 @@ mod tests {
 
     #[test]
     fn test_sqlite() {
-        let db = "db.sqlite";
+        let db = PathBuf::from("db.sqlite");
         Weather::create_db_table(&db);
-        Weather::populate_db("weather_log.csv", &db);
+        Weather::populate_db(&PathBuf::from("weather_log.csv"), &db);
         let weather: Weather = Weather::new(
             1615067637,
             "Tromsø".to_string(),
