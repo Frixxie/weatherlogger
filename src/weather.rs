@@ -91,7 +91,8 @@ impl Weather {
         let connection = sqlite::open(db).unwrap();
         connection
             .execute(
-                "CREATE TABLE if not exists weather (
+                "DROP TABLE IF EXISTS weather;
+                CREATE TABLE IF NOT EXISTS weather (
                 dt INTEGER,
                 name TEXT,
                 country TEXT,
@@ -243,6 +244,37 @@ mod tests {
             999,
         );
         let connection = sqlite::open(&db).unwrap();
-        //connection.iterate("SELECT * FROM weather", |pairs|);
+        let mut cursor = connection
+            .prepare("SELECT * FROM weather;")
+            .unwrap()
+            .cursor();
+        let row = cursor.next().unwrap().unwrap();
+        let new_weather: Weather = Weather::new(
+            row[0].as_integer().unwrap() as u32,
+            row[1].as_string().unwrap().to_string(),
+            row[2].as_string().unwrap().to_string(),
+            row[3].as_float().unwrap() as f32,
+            row[4].as_float().unwrap() as f32,
+            row[5].as_string().unwrap().to_string(),
+            row[6].as_string().unwrap().to_string(),
+            row[7].as_string().unwrap().to_string(),
+            row[8].as_integer().unwrap() as u32,
+            row[9].as_integer().unwrap() as u32,
+            row[10].as_integer().unwrap() as u32,
+            row[11].as_float().unwrap() as f32,
+            row[12].as_integer().unwrap() as i32,
+            row[13].as_integer().unwrap() as i32,
+            row[14].as_float().unwrap() as f32,
+            row[15].as_float().unwrap() as f32,
+            row[16].as_float().unwrap() as f32,
+            row[17].as_float().unwrap() as f32,
+            row[18].as_float().unwrap() as f32,
+            row[19].as_float().unwrap() as f32,
+            row[20].as_float().unwrap() as f32,
+            row[21].as_float().unwrap() as f32,
+            row[22].as_integer().unwrap() as u32,
+            row[23].as_integer().unwrap() as u32,
+        );
+        assert_eq!(new_weather, weather);
     }
 }
