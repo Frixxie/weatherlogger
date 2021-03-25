@@ -4,6 +4,7 @@ use std::cmp::PartialEq;
 use std::fmt;
 use std::path::PathBuf;
 
+//TODO: Make use of rust error system
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct Weather {
     dt: u32,
@@ -122,7 +123,7 @@ impl Weather {
             .unwrap();
     }
 
-    pub fn populate_db(csvfile: &PathBuf, db: &PathBuf) {
+    pub fn csv_to_db(csvfile: &PathBuf, db: &PathBuf) {
         let weather = Weather::read_from_csv(csvfile);
         let connection = sqlite::open(db).unwrap();
         for res in weather {
@@ -139,6 +140,11 @@ impl Weather {
             res.push(weather);
         }
         res
+    }
+
+    pub fn write_to_db(&self, db: &PathBuf) {
+        let connection = sqlite::open(db).unwrap();
+        connection.execute(format!("INSERT INTO weather (dt, name, country, lon, lat, main, desc, icon, sunrise, sunset, clouds, wind_speed, wind_deg, visibility, rain_1h, rain_3h, snow_1h, snow_3h, temp_min, temp_max, temp, feels_like, humidity, pressure) VALUES ({}, \"{}\", \"{}\", {}, {}, \"{}\", \"{}\", \"{}\", {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {});", self.dt, self.name, self.country, self.lon, self.lat, self.main, self.desc, self.icon, self.sunrise, self.sunset, self.clouds, self.wind_speed, self.wind_deg, self.visibility, self.rain_1h, self.rain_3h, self.snow_1h, self.snow_3h, self.temp_min, self.temp_max, self.temp, self.feels_like, self.humidity, self.pressure)).unwrap();
     }
 }
 
@@ -216,7 +222,7 @@ mod tests {
     fn test_sqlite() {
         let db = PathBuf::from("db.sqlite");
         Weather::create_db_table(&db);
-        Weather::populate_db(&PathBuf::from("weather_log.csv"), &db);
+        Weather::csv_to_db(&PathBuf::from("weather_log.csv"), &db);
         let weather: Weather = Weather::new(
             1615067637,
             "Tromsø".to_string(),
