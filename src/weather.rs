@@ -283,4 +283,70 @@ mod tests {
         );
         assert_eq!(new_weather, weather);
     }
+
+    #[test]
+    fn test_sqlite_write() {
+        let db = PathBuf::from("db2.sqlite");
+        Weather::create_db_table(&db);
+        let weather: Weather = Weather::new(
+            1615067637,
+            "Tromsø".to_string(),
+            "NO".to_string(),
+            18.957,
+            69.6496,
+            "Snow".to_string(),
+            "snow".to_string(),
+            "13n".to_string(),
+            1615009623,
+            1615046646,
+            90,
+            2.57,
+            170,
+            1100,
+            0.0,
+            0.0,
+            0.57,
+            0.0,
+            -6.0,
+            -5.56,
+            -5.77,
+            -10.35,
+            93,
+            999,
+        );
+        Weather::write_to_db(&weather, &db);
+        let connection = sqlite::open(&db).unwrap();
+        let mut cursor = connection
+            .prepare("SELECT * FROM weather;")
+            .unwrap()
+            .cursor();
+        let row = cursor.next().unwrap().unwrap();
+        let new_weather: Weather = Weather::new(
+            row[0].as_integer().unwrap() as u32,
+            row[1].as_string().unwrap().to_string(),
+            row[2].as_string().unwrap().to_string(),
+            row[3].as_float().unwrap() as f32,
+            row[4].as_float().unwrap() as f32,
+            row[5].as_string().unwrap().to_string(),
+            row[6].as_string().unwrap().to_string(),
+            row[7].as_string().unwrap().to_string(),
+            row[8].as_integer().unwrap() as u32,
+            row[9].as_integer().unwrap() as u32,
+            row[10].as_integer().unwrap() as u32,
+            row[11].as_float().unwrap() as f32,
+            row[12].as_integer().unwrap() as i32,
+            row[13].as_integer().unwrap() as i32,
+            row[14].as_float().unwrap() as f32,
+            row[15].as_float().unwrap() as f32,
+            row[16].as_float().unwrap() as f32,
+            row[17].as_float().unwrap() as f32,
+            row[18].as_float().unwrap() as f32,
+            row[19].as_float().unwrap() as f32,
+            row[20].as_float().unwrap() as f32,
+            row[21].as_float().unwrap() as f32,
+            row[22].as_integer().unwrap() as u32,
+            row[23].as_integer().unwrap() as u32,
+        );
+        assert_eq!(new_weather, weather);
+    }
 }
