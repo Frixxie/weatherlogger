@@ -12,7 +12,7 @@ cargo run
 To run the tests:
 
 ```sh
-cargo test
+cargo test -- --test-threads 1
 ```
 
 To install clone repo and run in folder:

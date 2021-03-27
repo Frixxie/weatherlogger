@@ -325,7 +325,7 @@ mod tests {
 
     #[test]
     fn test_sqlite_write() {
-        let db = PathBuf::from("db2.sqlite");
+        let db = PathBuf::from("db.sqlite");
         Weather::create_db_table(&db);
         let weather: Weather = Weather::new(
             1615067637,
@@ -391,7 +391,7 @@ mod tests {
 
     #[test]
     fn test_sqlite_read() {
-        let db = PathBuf::from("db3.sqlite");
+        let db = PathBuf::from("db.sqlite");
         Weather::create_db_table(&db);
         let weather: Weather = Weather::new(
             1615067637,
