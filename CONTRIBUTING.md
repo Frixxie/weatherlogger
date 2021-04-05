@@ -1,1 +1,1 @@
-Just send a PR or something, contrebutions are welcome!
+Just send a PR or something, contributions are welcome!
