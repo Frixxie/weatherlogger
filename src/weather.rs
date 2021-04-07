@@ -2,7 +2,7 @@ use csv::Reader;
 use serde::Deserialize;
 use std::cmp::PartialEq;
 use std::fmt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 //TODO: Make use of rust error system
 #[derive(Debug, Deserialize, PartialEq)]
@@ -88,7 +88,7 @@ impl Weather {
         }
     }
 
-    pub fn create_db_table(db: &PathBuf) {
+    pub fn create_db_table(db: &Path) {
         let connection = sqlite::open(db).unwrap();
         connection
             .execute(
@@ -123,7 +123,7 @@ impl Weather {
             .unwrap();
     }
 
-    pub fn csv_to_db(csvfile: &PathBuf, db: &PathBuf) {
+    pub fn csv_to_db(csvfile: &Path, db: &Path) {
         let weather = Weather::read_from_csv(csvfile);
         let connection = sqlite::open(db).unwrap();
         for res in weather {
@@ -131,7 +131,7 @@ impl Weather {
         }
     }
 
-    pub fn read_from_csv(file: &PathBuf) -> Vec<Weather> {
+    pub fn read_from_csv(file: &Path) -> Vec<Weather> {
         let mut rdr = Reader::from_path(file).unwrap();
         let mut res = Vec::<Weather>::new();
         for result in rdr.deserialize() {
@@ -142,12 +142,12 @@ impl Weather {
         res
     }
 
-    pub fn write_to_db(&self, db: &PathBuf) {
+    pub fn write_to_db(&self, db: &Path) {
         let connection = sqlite::open(db).unwrap();
         connection.execute(format!("INSERT INTO weather (dt, name, country, lon, lat, main, desc, icon, sunrise, sunset, clouds, wind_speed, wind_deg, visibility, rain_1h, rain_3h, snow_1h, snow_3h, temp_min, temp_max, temp, feels_like, humidity, pressure) VALUES ({}, \"{}\", \"{}\", {}, {}, \"{}\", \"{}\", \"{}\", {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {});", self.dt, self.name, self.country, self.lon, self.lat, self.main, self.desc, self.icon, self.sunrise, self.sunset, self.clouds, self.wind_speed, self.wind_deg, self.visibility, self.rain_1h, self.rain_3h, self.snow_1h, self.snow_3h, self.temp_min, self.temp_max, self.temp, self.feels_like, self.humidity, self.pressure)).unwrap();
     }
 
-    pub fn read_from_db(db: &PathBuf) -> Vec<Weather> {
+    pub fn read_from_db(db: &Path) -> Vec<Weather> {
         let connection = sqlite::open(db).unwrap();
         let mut reses: Vec<Weather> = Vec::<Weather>::new();
         let mut cursor = connection
