@@ -102,7 +102,7 @@ async fn main() -> Result<(), io::Error> {
     let mut futures = Vec::new();
     for loc in locs {
         //needed for move
-        let api_clone = api.clone();
+        let api_clone = api.to_owned();
         futures.push(tokio::spawn(
             async move { get_weather(&api_clone, &loc).await },
         ));
