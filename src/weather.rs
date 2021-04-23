@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use csv::Reader;
 use serde::Deserialize;
 use std::cmp::PartialEq;
