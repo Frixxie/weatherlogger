@@ -3,7 +3,7 @@ use csv::Reader;
 use serde::Deserialize;
 use std::cmp::PartialEq;
 use std::fmt;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 //TODO: Make use of rust error system
 #[derive(Debug, Deserialize, PartialEq)]
