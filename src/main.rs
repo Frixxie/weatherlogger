@@ -1,4 +1,6 @@
+extern crate serde;
 use reqwest::get;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use structopt::StructOpt;
 use tokio::fs;
@@ -18,13 +20,20 @@ struct Opt {
     #[structopt(short, long)]
     isp_loc: bool,
 
-    ///Apikey filename
-    #[structopt(short, long, default_value = "./apikey")]
-    apikey_file: PathBuf,
+    #[structopt(short, long, default_value = "./config.json")]
+    config_file: PathBuf,
+}
 
-    ///Locations filename
-    #[structopt(short, long, default_value = "./locations")]
-    locations_file: PathBuf,
+#[derive(Serialize, Deserialize, Debug)]
+struct Config {
+    apikey: String,
+    locations: Vec<String>,
+}
+
+impl Config {
+    pub async fn new(config_file: PathBuf) -> Config {
+        serde_json::from_str(&fs::read_to_string(config_file).await.unwrap()).unwrap()
+    }
 }
 
 async fn get_weather(api: &str, loc: &str) -> weather::Weather {
@@ -69,54 +78,40 @@ async fn get_city(url: &str) -> String {
     get(url).await.unwrap().text().await.unwrap()
 }
 
-async fn get_locs(isp_loc: bool, loc_f: PathBuf) -> Vec<String> {
-    if isp_loc {
-        vec![get_city("http://ip-api.com/line/?fields=city").await]
-    } else {
-        fs::read_to_string(loc_f)
-            .await
-            .unwrap()
-            .trim_matches(char::is_control)
-            .to_string()
-            .split_whitespace()
-            .map(|s| s.to_owned())
-            .collect()
-    }
-}
-
 #[tokio::main]
 async fn main() -> Result<(), io::Error> {
     //reading in loc and apikey
     let opt = Opt::from_args();
 
-    //reading in api and locs
-    let (api_res, locs) = tokio::join!(
-        fs::read_to_string(opt.apikey_file),
-        get_locs(opt.isp_loc, opt.locations_file)
-    );
+    //Gets the current configuration
+    let config = Config::new(opt.config_file).await;
 
-    //trimming
-    let api = api_res.unwrap().trim_matches(char::is_control).to_string();
+    match opt.isp_loc {
+        true => {
+            let loc = get_city("http://ip-api.com/line/?fields=city").await;
+            println!("{}", get_weather(&config.apikey, &loc).await);
+        }
+        false => {
+            //vector for containing the join_handles spawned from the tokio threads
+            let mut futures = Vec::new();
+            for loc in config.locations {
+                //needed for move
+                let api_clone = config.apikey.to_owned();
+                futures.push(tokio::spawn(
+                    async move { get_weather(&api_clone, &loc).await },
+                ));
+            }
 
-    //vector for containing the join_handles spawned from the tokio threads
-    let mut futures = Vec::new();
-    for loc in locs {
-        //needed for move
-        let api_clone = api.to_owned();
-        futures.push(tokio::spawn(
-            async move { get_weather(&api_clone, &loc).await },
-        ));
+            let mut reses = Vec::<weather::Weather>::new();
+            //getting the results or something
+            for future in futures {
+                reses.push(future.await?);
+            }
+
+            for res in &reses {
+                println!("{}", res);
+            }
+        }
     }
-
-    let mut reses = Vec::<weather::Weather>::new();
-    //getting the results or something
-    for future in futures {
-        reses.push(future.await?);
-    }
-
-    for res in &reses {
-        println!("{}", res);
-    }
-
     Ok(())
 }
