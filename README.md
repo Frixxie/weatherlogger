@@ -6,7 +6,7 @@ uses a file of locations and can optionally instead use an ip location
 To run without installing:
 
 ```sh
-cargo run 
+cargo run
 ```
 
 To run the tests:
@@ -21,14 +21,15 @@ To install clone repo and run in folder:
 cargo install --path .
 ```
 
-To run with apikey and file of locations:
+To run with config file:
 
 ```sh
-weatherlogger -a </path/to/apikey> -l </path/to/locations_file/>
+weatherlogger -c </path/to/config.json>
 ```
+Example config file can be found in 'config_example.json'
 
 Optionally to use ip location run:
 
 ```sh
-weatherlogger -a </path/to/apikey> -i
+weatherlogger -c </path/to/config.json> -i
 ```

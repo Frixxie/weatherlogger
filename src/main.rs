@@ -20,6 +20,7 @@ struct Opt {
     #[structopt(short, long)]
     isp_loc: bool,
 
+    //Config file
     #[structopt(short, long, default_value = "./config.json")]
     config_file: PathBuf,
 }
@@ -31,6 +32,7 @@ struct Config {
 }
 
 impl Config {
+    ///Creates a config instance.
     pub async fn new(config_file: PathBuf) -> Config {
         serde_json::from_str(&fs::read_to_string(config_file).await.unwrap()).unwrap()
     }
