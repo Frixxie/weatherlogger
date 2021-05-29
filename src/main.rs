@@ -1,13 +1,13 @@
 extern crate serde;
+mod weather;
+
 use reqwest::get;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use structopt::StructOpt;
-use tokio::fs;
-mod weather;
-
 use std::io;
 use std::path::PathBuf;
+use structopt::StructOpt;
+use tokio::fs;
 
 #[derive(Debug, StructOpt)]
 #[structopt(
@@ -24,6 +24,8 @@ struct Opt {
     config_file: PathBuf,
 }
 
+/// Config struct 
+/// For convenience
 #[derive(Serialize, Deserialize)]
 struct Config {
     apikey: String,
