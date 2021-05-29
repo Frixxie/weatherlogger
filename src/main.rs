@@ -24,7 +24,7 @@ struct Opt {
     config_file: PathBuf,
 }
 
-/// Config struct 
+/// Config struct
 /// For convenience
 #[derive(Serialize, Deserialize)]
 struct Config {
@@ -34,8 +34,8 @@ struct Config {
 
 impl Config {
     ///Creates a config instance.
-    pub async fn new(config_file: PathBuf) -> Config {
-        serde_json::from_str(&fs::read_to_string(config_file).await.unwrap()).unwrap()
+    pub async fn new(config_file: PathBuf) -> Result<Config, io::Error> {
+        Ok(serde_json::from_str(&fs::read_to_string(config_file).await.unwrap()).unwrap())
     }
 }
 
@@ -88,7 +88,7 @@ async fn main() -> Result<(), io::Error> {
     let opt = Opt::from_args();
 
     //Gets the current configuration
-    let config = Config::new(opt.config_file).await;
+    let config = Config::new(opt.config_file).await.unwrap();
 
     match opt.isp_loc {
         true => {
