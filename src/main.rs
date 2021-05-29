@@ -7,7 +7,6 @@ use tokio::fs;
 mod weather;
 
 use std::io;
-
 use std::path::PathBuf;
 
 #[derive(Debug, StructOpt)]
@@ -20,12 +19,12 @@ struct Opt {
     #[structopt(short, long)]
     isp_loc: bool,
 
-    //Config file
+    ///Config file
     #[structopt(short, long, default_value = "./config.json")]
     config_file: PathBuf,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 struct Config {
     apikey: String,
     locations: Vec<String>,
@@ -76,6 +75,7 @@ async fn get_weather(api: &str, loc: &str) -> weather::Weather {
     )
 }
 
+/// Gets the city based on ip
 async fn get_city(url: &str) -> String {
     get(url).await.unwrap().text().await.unwrap()
 }
