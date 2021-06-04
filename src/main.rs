@@ -22,6 +22,10 @@ struct Opt {
     ///Config file
     #[structopt(short, long, default_value = "./config.json")]
     config_file: PathBuf,
+
+    ///Plot weather
+    #[structopt(short, long)]
+    plot_temp: bool,
 }
 
 /// Config struct
@@ -30,6 +34,7 @@ struct Opt {
 struct Config {
     apikey: String,
     locations: Vec<String>,
+    csvfile: String,
 }
 
 impl Config {
@@ -39,7 +44,7 @@ impl Config {
     }
 }
 
-async fn get_weather(api: &str, loc: &str) -> weather::Weather {
+async fn get_weather_openweathermap(api: &str, loc: &str) -> weather::Weather {
     let url = format!(
         "https://api.openweathermap.org/data/2.5/weather?q={}&units=metric&appid={}",
         loc, api
@@ -93,7 +98,7 @@ async fn main() -> Result<(), io::Error> {
     match opt.isp_loc {
         true => {
             let loc = get_city("http://ip-api.com/line/?fields=city").await;
-            println!("{}", get_weather(&config.apikey, &loc).await);
+            println!("{}", get_weather_openweathermap(&config.apikey, &loc).await);
         }
         false => {
             //vector for containing the join_handles spawned from the tokio threads
@@ -102,7 +107,7 @@ async fn main() -> Result<(), io::Error> {
                 //needed for move
                 let api_clone = config.apikey.to_owned();
                 futures.push(tokio::spawn(
-                    async move { get_weather(&api_clone, &loc).await },
+                    async move { get_weather_openweathermap(&api_clone, &loc).await },
                 ));
             }
 
@@ -116,6 +121,12 @@ async fn main() -> Result<(), io::Error> {
                 println!("{}", res);
             }
         }
+    }
+    if opt.plot_temp {
+        let weathers = weather::Weather::read_from_csv(std::path::Path::new(&config.csvfile));
+        let tmp = weather::Weather::filter(&weathers, "Trondheim");
+        println!("{:?}", tmp);
+        weather::Weather::create_tmp_plot(&tmp, std::path::Path::new("test.png"));
     }
     Ok(())
 }
