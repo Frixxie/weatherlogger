@@ -106,9 +106,9 @@ async fn main() -> Result<(), io::Error> {
             for loc in config.locations {
                 //needed for move
                 let api_clone = config.apikey.to_owned();
-                futures.push(tokio::spawn(
-                    async move { get_weather_openweathermap(&api_clone, &loc).await },
-                ));
+                futures.push(tokio::spawn(async move {
+                    get_weather_openweathermap(&api_clone, &loc).await
+                }));
             }
 
             let mut reses = Vec::<weather::Weather>::new();
@@ -124,8 +124,7 @@ async fn main() -> Result<(), io::Error> {
     }
     if opt.plot_temp {
         let weathers = weather::Weather::read_from_csv(std::path::Path::new(&config.csvfile));
-        let tmp = weather::Weather::filter(&weathers, "Trondheim");
-        println!("{:?}", tmp);
+        let tmp = weather::Weather::filter(&weathers, "Heimdal");
         weather::Weather::create_tmp_plot(&tmp, std::path::Path::new("test.png"));
     }
     Ok(())

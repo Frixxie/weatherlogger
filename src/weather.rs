@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use csv::Reader;
 use plotters::prelude::*;
+use rayon::prelude::*;
 use serde::Deserialize;
 use std::cmp::PartialEq;
 use std::fmt;
@@ -90,6 +91,7 @@ impl Weather {
         }
     }
 
+    /// Finds the smallest value in the vec of f32s
     fn min_f32(vec: &Vec<f32>) -> f32 {
         let mut min = std::f32::MAX;
         for val in vec.into_iter() {
@@ -97,10 +99,10 @@ impl Weather {
                 min = *val;
             }
         }
-        println!("{}", min);
         min
     }
 
+    /// Finds the largest value in the vec of f32s
     fn max_f32(vec: &Vec<f32>) -> f32 {
         let mut max = std::f32::MIN;
         for val in vec.into_iter() {
@@ -108,14 +110,14 @@ impl Weather {
                 max = *val;
             }
         }
-        println!("{}", max);
         max
     }
 
+    /// Filters out weather matching name
     pub fn filter(weathers: &[Weather], name: &str) -> Vec<Weather> {
         weathers
             .to_owned()
-            .into_iter()
+            .into_par_iter()
             .filter(|weather| weather.name == name)
             .map(|weather| weather.to_owned())
             .collect()
@@ -125,38 +127,49 @@ impl Weather {
     pub fn create_tmp_plot(weathers: &[Weather], filename: &Path) {
         let root = BitMapBackend::new(filename, (640, 480)).into_drawing_area();
         root.fill(&WHITE).unwrap();
-        let dts: Vec<f32> = weathers.iter().map(|weather| weather.dt as f32).collect();
-        let temps: Vec<f32> = weathers.iter().map(|weather| weather.temp).collect();
+
+        // gets the time and temperature from weathers
+        let dts: Vec<f32> = weathers
+            .into_par_iter()
+            .map(|weather| weather.dt as f32)
+            .collect();
+        let temps: Vec<f32> = weathers
+            .into_par_iter()
+            .map(|weather| weather.temp)
+            .collect();
+
+        // Finds min and max values needed for plot
         let min_dt = Weather::min_f32(&dts);
         let max_dt = Weather::max_f32(&dts);
         let min_temps = Weather::min_f32(&temps);
         let max_temps = Weather::max_f32(&temps);
+
+        // creates chart instance
         let mut chart = ChartBuilder::on(&root)
-            .caption("Temperature", ("sans-serif", 50).into_font())
+            .caption("Temperature", ("sans-serif", 30).into_font())
             .margin(5)
-            .x_label_area_size(30)
-            .y_label_area_size(30)
+            .x_label_area_size(100)
+            .y_label_area_size(100)
             .build_cartesian_2d(min_dt..max_dt, min_temps..max_temps)
             .unwrap();
 
         chart.configure_mesh().draw().unwrap();
 
+        // creates the points to be plotted
         let points: Vec<(f32, f32)> = dts
-            .iter()
-            .zip(temps.iter())
+            .into_par_iter()
+            .zip(temps.into_par_iter())
             .map(|val| (val.0.to_owned(), val.1.to_owned()))
             .collect();
 
-        //chart.draw_series(LineSeries::new(dts.iter().zip(temps.iter()).map(|val| val), &RED)).unwrap().label("Test");
+        // Draws points
         chart
-            .draw_series(LineSeries::new(
-                // (-50..=50).map(|x| x as f32 / 50.0).map(|x| (x, x * x)),
-                points, &RED,
-            ))
+            .draw_series(LineSeries::new(points, &RED))
             .unwrap()
             .label(weathers[0].name.to_owned())
             .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
 
+        // updates and fixes(?)
         chart
             .configure_series_labels()
             .background_style(&WHITE.mix(0.8))
@@ -213,7 +226,6 @@ impl Weather {
         let mut res = Vec::<Weather>::new();
         for result in rdr.deserialize() {
             let weather: Weather = result.unwrap();
-            println!("{:?}", weather);
             res.push(weather);
         }
         res
