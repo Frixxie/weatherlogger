@@ -147,9 +147,9 @@ impl Weather {
         // creates chart instance
         let mut chart = ChartBuilder::on(&root)
             .caption("Temperature", ("sans-serif", 30).into_font())
-            .margin(5)
-            .x_label_area_size(100)
-            .y_label_area_size(100)
+            .margin(10)
+            .x_label_area_size(30)
+            .y_label_area_size(30)
             .build_cartesian_2d(min_dt..max_dt, min_temps..max_temps)
             .unwrap();
 
