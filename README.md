@@ -33,3 +33,9 @@ Optionally to use ip location run:
 ```sh
 weatherlogger -c </path/to/config.json> -i
 ```
+
+WIP: Creating graphs from stored data
+```sh
+weatherlogger -p
+```
+Will plot the temperature of a location which locations will be configured later

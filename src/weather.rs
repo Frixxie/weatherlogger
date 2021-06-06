@@ -125,7 +125,7 @@ impl Weather {
 
     /// PLOTS the temperature from weather, needs to be filterd
     pub fn create_tmp_plot(weathers: &[Weather], filename: &Path) {
-        let root = BitMapBackend::new(filename, (640, 480)).into_drawing_area();
+        let root = BitMapBackend::new(filename, (1280, 480)).into_drawing_area();
         root.fill(&WHITE).unwrap();
 
         // gets the time and temperature from weathers
@@ -137,6 +137,10 @@ impl Weather {
             .into_par_iter()
             .map(|weather| weather.temp)
             .collect();
+        let feels_likes: Vec<f32> = weathers
+            .into_par_iter()
+            .map(|weather| weather.feels_like)
+            .collect();
 
         // Finds min and max values needed for plot
         let min_dt = Weather::min_f32(&dts);
@@ -146,7 +150,7 @@ impl Weather {
 
         // creates chart instance
         let mut chart = ChartBuilder::on(&root)
-            .caption("Temperature", ("sans-serif", 30).into_font())
+            .caption(format!("Temperature in {}", weathers[0].name.to_owned()), ("sans-serif", 30).into_font())
             .margin(10)
             .x_label_area_size(30)
             .y_label_area_size(30)
@@ -156,7 +160,8 @@ impl Weather {
         chart.configure_mesh().draw().unwrap();
 
         // creates the points to be plotted
-        let points: Vec<(f32, f32)> = dts
+        let mut points: Vec<(f32, f32)> = dts
+            .to_vec()
             .into_par_iter()
             .zip(temps.into_par_iter())
             .map(|val| (val.0.to_owned(), val.1.to_owned()))
@@ -166,8 +171,21 @@ impl Weather {
         chart
             .draw_series(LineSeries::new(points, &RED))
             .unwrap()
-            .label(weathers[0].name.to_owned())
+            .label("Temperature")
             .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
+
+        points = dts
+            .to_vec()
+            .into_par_iter()
+            .zip(feels_likes.into_par_iter())
+            .map(|val| (val.0.to_owned(), val.1.to_owned()))
+            .collect();
+
+        chart
+            .draw_series(LineSeries::new(points, &GREEN))
+            .unwrap()
+            .label("Feels like")
+            .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &GREEN));
 
         // updates and fixes(?)
         chart
