@@ -123,8 +123,8 @@ async fn main() -> Result<(), io::Error> {
         }
     }
     if opt.plot_temp {
-        let weathers = weather::Weather::read_from_csv(std::path::Path::new(&config.csvfile));
-        let tmp = weather::Weather::filter(&weathers, "Heimdal");
+        let weathers = weather::Weather::read_from_csv(std::path::Path::new(&config.csvfile)).unwrap();
+        let tmp = weather::Weather::filter(&weathers, "Breivika");
         weather::Weather::create_tmp_plot(&tmp, std::path::Path::new("test.png"));
     }
     Ok(())

@@ -5,7 +5,7 @@ use rayon::prelude::*;
 use serde::Deserialize;
 use std::cmp::PartialEq;
 use std::fmt;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 //TODO: Make use of rust error system
 #[derive(Debug, Deserialize, PartialEq, Clone)]
@@ -123,7 +123,8 @@ impl Weather {
             .collect()
     }
 
-    /// PLOTS the temperature from weather, needs to be filterd
+    /// PLOTS the temperature from weather, which needs to be filterd
+    /// The code is based on the examples provided by the plotters crate
     pub fn create_tmp_plot(weathers: &[Weather], filename: &Path) {
         let root = BitMapBackend::new(filename, (1280, 480)).into_drawing_area();
         root.fill(&WHITE).unwrap();
@@ -150,7 +151,10 @@ impl Weather {
 
         // creates chart instance
         let mut chart = ChartBuilder::on(&root)
-            .caption(format!("Temperature in {}", weathers[0].name.to_owned()), ("sans-serif", 30).into_font())
+            .caption(
+                format!("Temperature in {}", weathers[0].name.to_owned()),
+                ("sans-serif", 30).into_font(),
+            )
             .margin(10)
             .x_label_area_size(30)
             .y_label_area_size(30)
@@ -231,22 +235,31 @@ impl Weather {
             .unwrap();
     }
 
-    pub fn csv_to_db(csvfile: &Path, db: &Path) {
+    pub fn csv_to_db(csvfile: &Path, db: &Path) -> Result<(), csv::Error> {
         let weather = Weather::read_from_csv(csvfile);
-        let connection = sqlite::open(db).unwrap();
-        for res in weather {
-            connection.execute(format!("INSERT INTO weather (dt, name, country, lon, lat, main, desc, icon, sunrise, sunset, clouds, wind_speed, wind_deg, visibility, rain_1h, rain_3h, snow_1h, snow_3h, temp_min, temp_max, temp, feels_like, humidity, pressure) VALUES ({}, \"{}\", \"{}\", {}, {}, \"{}\", \"{}\", \"{}\", {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {});", res.dt, res.name, res.country, res.lon, res.lat, res.main, res.desc, res.icon, res.sunrise, res.sunset, res.clouds, res.wind_speed, res.wind_deg, res.visibility, res.rain_1h, res.rain_3h, res.snow_1h, res.snow_3h, res.temp_min, res.temp_max, res.temp, res.feels_like, res.humidity, res.pressure)).unwrap();
+        match weather {
+            Ok(weather) => {
+                let connection = sqlite::open(db).unwrap();
+                for res in weather {
+                    //TODO: patternmatch here as well
+                    connection.execute(format!("INSERT INTO weather (dt, name, country, lon, lat, main, desc, icon, sunrise, sunset, clouds, wind_speed, wind_deg, visibility, rain_1h, rain_3h, snow_1h, snow_3h, temp_min, temp_max, temp, feels_like, humidity, pressure) VALUES ({}, \"{}\", \"{}\", {}, {}, \"{}\", \"{}\", \"{}\", {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {});", res.dt, res.name, res.country, res.lon, res.lat, res.main, res.desc, res.icon, res.sunrise, res.sunset, res.clouds, res.wind_speed, res.wind_deg, res.visibility, res.rain_1h, res.rain_3h, res.snow_1h, res.snow_3h, res.temp_min, res.temp_max, res.temp, res.feels_like, res.humidity, res.pressure)).unwrap();
+                }
+            }
+            Err(error) => return Err(error),
         }
+        Ok(())
     }
 
-    pub fn read_from_csv(file: &Path) -> Vec<Weather> {
+    pub fn read_from_csv(file: &Path) -> Result<Vec<Weather>, csv::Error> {
         let mut rdr = Reader::from_path(file).unwrap();
         let mut res = Vec::<Weather>::new();
         for result in rdr.deserialize() {
-            let weather: Weather = result.unwrap();
-            res.push(weather);
+            match result {
+                Ok(weather) => res.push(weather),
+                Err(error) => return Err(error),
+            }
         }
-        res
+        Ok(res)
     }
 
     pub fn write_to_db(&self, db: &Path) {
@@ -292,6 +305,10 @@ impl Weather {
         }
         reses
     }
+
+    pub fn write_to_csv(self, csvfile: &Path) -> Result<(), String> {
+        todo!()
+    }
 }
 
 impl fmt::Display for Weather {
@@ -330,11 +347,12 @@ impl fmt::Display for Weather {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
 
     #[test]
     fn test_parse_csvfile() {
         let file = PathBuf::from("weather_log.csv");
-        let reses: Vec<Weather> = Weather::read_from_csv(&file);
+        let reses: Vec<Weather> = Weather::read_from_csv(&file).unwrap();
         let weather: Weather = Weather::new(
             1615067637,
             "Tromsø".to_string(),
@@ -368,7 +386,7 @@ mod tests {
     fn test_sqlite() {
         let db = PathBuf::from("db.sqlite");
         Weather::create_db_table(&db);
-        Weather::csv_to_db(&PathBuf::from("weather_log.csv"), &db);
+        Weather::csv_to_db(&PathBuf::from("weather_log.csv"), &db).unwrap();
         let weather: Weather = Weather::new(
             1615067637,
             "Tromsø".to_string(),
