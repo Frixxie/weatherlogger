@@ -4,6 +4,7 @@ use plotters::prelude::*;
 use rayon::prelude::*;
 use serde::Deserialize;
 use std::cmp::PartialEq;
+use std::error::Error;
 use std::fmt;
 use std::path::Path;
 
@@ -91,6 +92,21 @@ impl Weather {
         }
     }
 
+    /// calculates the mean temp
+    /// Callers resposability to have filtered the location of data!
+    pub fn mean_temp(weather: &Vec<Weather>) -> Option<f32> {
+        if !weather.is_empty() {
+            return Some(
+                weather
+                    .into_par_iter()
+                    .map(|weather| weather.temp)
+                    .sum::<f32>()
+                    / weather.len() as f32,
+            );
+        }
+        None
+    }
+
     /// Finds the smallest value in the vec of f32s
     fn min_f32(vec: &Vec<f32>) -> f32 {
         let mut min = std::f32::MAX;
@@ -125,14 +141,14 @@ impl Weather {
 
     /// PLOTS the temperature from weather, which needs to be filterd
     /// The code is based on the examples provided by the plotters crate
-    pub fn create_tmp_plot(weathers: &[Weather], filename: &Path) {
+    pub fn create_temp_plot(weathers: &[Weather], filename: &Path) {
         let root = BitMapBackend::new(filename, (1280, 480)).into_drawing_area();
         root.fill(&WHITE).unwrap();
 
         // gets the time and temperature from weathers
         let dts: Vec<f32> = weathers
             .into_par_iter()
-            .map(|weather| weather.dt as f32)
+            .map(|weather| weather.humidity as f32)
             .collect();
         let temps: Vec<f32> = weathers
             .into_par_iter()
@@ -173,7 +189,10 @@ impl Weather {
 
         // Draws points
         chart
-            .draw_series(LineSeries::new(points, &RED))
+            .draw_series(PointSeries::of_element(points, 1, &RED, &|c, s, st| {
+                return EmptyElement::at(c)    // We want to construct a composed element on-the-fly
+            + Circle::new((0,0),s,st.filled()); // At this point, the new pixel coordinate is established
+            }))
             .unwrap()
             .label("Temperature")
             .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
@@ -343,6 +362,8 @@ impl fmt::Display for Weather {
         )
     }
 }
+
+impl Error for Weather {}
 
 #[cfg(test)]
 mod tests {
@@ -547,5 +568,14 @@ mod tests {
         Weather::write_to_db(&weather, &db);
         let reses = Weather::read_from_db(&db);
         assert_eq!(reses[0], weather)
+    }
+
+    #[test]
+    fn test_mean_test() {
+        let file = PathBuf::from("weather_log.csv");
+        let reses: Vec<Weather> = Weather::read_from_csv(&file).unwrap();
+        println!("{:?}", reses);
+        let res = Weather::mean_temp(&reses).unwrap();
+        assert_eq!(res, -5.77)
     }
 }

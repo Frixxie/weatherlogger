@@ -2,7 +2,7 @@ extern crate serde;
 mod weather;
 
 use reqwest::get;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::Value;
 use std::io;
 use std::path::PathBuf;
@@ -30,7 +30,7 @@ struct Opt {
 
 /// Config struct
 /// For convenience
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 struct Config {
     apikey: String,
     locations: Vec<String>,
@@ -123,9 +123,10 @@ async fn main() -> Result<(), io::Error> {
         }
     }
     if opt.plot_temp {
-        let weathers = weather::Weather::read_from_csv(std::path::Path::new(&config.csvfile)).unwrap();
-        let tmp = weather::Weather::filter(&weathers, "Breivika");
-        weather::Weather::create_tmp_plot(&tmp, std::path::Path::new("test.png"));
+        let weathers =
+            weather::Weather::read_from_csv(std::path::Path::new(&config.csvfile)).unwrap();
+        let tmp = weather::Weather::filter(&weathers, "Tromsø");
+        weather::Weather::create_temp_plot(&tmp, std::path::Path::new("test.png"));
     }
     Ok(())
 }
