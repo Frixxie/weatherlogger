@@ -94,7 +94,7 @@ impl Weather {
 
     /// calculates the mean temp
     /// Callers resposability to have filtered the location of data!
-    pub fn mean_temp(weather: &Vec<Weather>) -> Option<f32> {
+    pub fn mean_temp(weather: &[Weather]) -> Option<f32> {
         if !weather.is_empty() {
             return Some(
                 weather
@@ -108,9 +108,9 @@ impl Weather {
     }
 
     /// Finds the smallest value in the vec of f32s
-    fn min_f32(vec: &Vec<f32>) -> f32 {
+    fn min_f32(vec: &[f32]) -> f32 {
         let mut min = std::f32::MAX;
-        for val in vec.into_iter() {
+        for val in vec.iter() {
             if val < &min {
                 min = *val;
             }
@@ -119,9 +119,9 @@ impl Weather {
     }
 
     /// Finds the largest value in the vec of f32s
-    fn max_f32(vec: &Vec<f32>) -> f32 {
+    fn max_f32(vec: &[f32]) -> f32 {
         let mut max = std::f32::MIN;
-        for val in vec.into_iter() {
+        for val in vec.iter() {
             if val > &max {
                 max = *val;
             }
@@ -135,7 +135,7 @@ impl Weather {
             .to_owned()
             .into_par_iter()
             .filter(|weather| weather.name == name)
-            .map(|weather| weather.to_owned())
+            .map(|weather| weather)
             .collect()
     }
 
@@ -190,8 +190,8 @@ impl Weather {
         // Draws points
         chart
             .draw_series(PointSeries::of_element(points, 1, &RED, &|c, s, st| {
-                return EmptyElement::at(c)    // We want to construct a composed element on-the-fly
-            + Circle::new((0,0),s,st.filled()); // At this point, the new pixel coordinate is established
+                EmptyElement::at(c)    // We want to construct a composed element on-the-fly
+            + Circle::new((0,0),s,st.filled()) // At this point, the new pixel coordinate is established
             }))
             .unwrap()
             .label("Temperature")
