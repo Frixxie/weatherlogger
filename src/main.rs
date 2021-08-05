@@ -35,6 +35,7 @@ struct Config {
     apikey: String,
     locations: Vec<String>,
     csvfile: String,
+    dbfile: String,
 }
 
 impl Config {
@@ -133,7 +134,7 @@ async fn main() -> Result<(), io::Error> {
             let tmp = weather::Weather::filter(&weathers, location.as_str());
             weather::Weather::create_temp_plot(
                 &tmp,
-                std::path::Path::new(&format!("{}_temp.png", &location)),
+                std::path::Path::new(&format!("plots/{}_temp.png", &location)),
             );
         }
     }

@@ -139,6 +139,8 @@ impl Weather {
             .collect()
     }
 
+    /// Get the locations by getting the list of locations sorting it and then 
+    /// running dedup on the list to remove the duplicates
     pub fn get_locations(weathers: &[Weather]) -> Vec<String> {
         let mut res: Vec<String> = weathers
             .par_iter()
