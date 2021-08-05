@@ -139,6 +139,16 @@ impl Weather {
             .collect()
     }
 
+    pub fn get_locations(weathers: &[Weather]) -> Vec<String> {
+        let mut res: Vec<String> = weathers
+            .par_iter()
+            .map(|weather| weather.name.clone())
+            .collect();
+        res.par_sort();
+        res.dedup();
+        res
+    }
+
     /// PLOTS the temperature from weather, which needs to be filterd
     /// The code is based on the examples provided by the plotters crate
     pub fn create_temp_plot(weathers: &[Weather], filename: &Path) {
@@ -148,7 +158,7 @@ impl Weather {
         // gets the time and temperature from weathers
         let dts: Vec<f32> = weathers
             .into_par_iter()
-            .map(|weather| weather.humidity as f32)
+            .map(|weather| weather.dt as f32)
             .collect();
         let temps: Vec<f32> = weathers
             .into_par_iter()
@@ -189,10 +199,7 @@ impl Weather {
 
         // Draws points
         chart
-            .draw_series(PointSeries::of_element(points, 1, &RED, &|c, s, st| {
-                EmptyElement::at(c)    // We want to construct a composed element on-the-fly
-            + Circle::new((0,0),s,st.filled()) // At this point, the new pixel coordinate is established
-            }))
+            .draw_series(LineSeries::new(points, &RED))
             .unwrap()
             .label("Temperature")
             .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));

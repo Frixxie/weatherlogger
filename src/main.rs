@@ -125,8 +125,17 @@ async fn main() -> Result<(), io::Error> {
     if opt.plot_temp {
         let weathers =
             weather::Weather::read_from_csv(std::path::Path::new(&config.csvfile)).unwrap();
-        let tmp = weather::Weather::filter(&weathers, "Tromsø");
-        weather::Weather::create_temp_plot(&tmp, std::path::Path::new("test.png"));
+        println!("Getting locations");
+        let locations = weather::Weather::get_locations(&weathers);
+        println!("{:?}", locations);
+        for location in locations {
+            println!("Creating plot for location {}", location);
+            let tmp = weather::Weather::filter(&weathers, location.as_str());
+            weather::Weather::create_temp_plot(
+                &tmp,
+                std::path::Path::new(&format!("{}_temp.png", &location)),
+            );
+        }
     }
     Ok(())
 }
