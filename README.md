@@ -1,6 +1,6 @@
 # weatherlogger
 
-You need an apikey from https://openweathermap.org/
+You need an apikey from [OpenWeatherMap](https://openweathermap.org/)
 uses a file of locations and can optionally instead use an ip location
 
 To run without installing:
@@ -26,6 +26,7 @@ To run with config file:
 ```sh
 weatherlogger -c </path/to/config.json>
 ```
+
 Example config file can be found in 'config_example.json'
 
 Optionally to use ip location run:
@@ -34,8 +35,8 @@ Optionally to use ip location run:
 weatherlogger -c </path/to/config.json> -i
 ```
 
-WIP: Creating graphs from stored data
+To plot the temperature trends of the csv logfile:
+
 ```sh
 weatherlogger -p
 ```
-Will plot the temperature of a location which locations will be configured later
