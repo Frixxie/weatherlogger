@@ -6,6 +6,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use std::io;
 use std::path::PathBuf;
+use std::sync::Arc;
 use structopt::StructOpt;
 use tokio::fs;
 
@@ -94,7 +95,7 @@ async fn main() -> Result<(), io::Error> {
     let opt = Opt::from_args();
 
     //Gets the current configuration
-    let config = Config::new(opt.config_file).await.unwrap();
+    let config = Arc::new(Config::new(opt.config_file).await.unwrap());
 
     match opt.isp_loc {
         true => {
@@ -104,9 +105,9 @@ async fn main() -> Result<(), io::Error> {
         false => {
             //vector for containing the join_handles spawned from the tokio threads
             let mut futures = Vec::new();
-            for loc in config.locations {
+            for loc in config.locations.clone() {
                 //needed for move
-                let api_clone = config.apikey.to_owned();
+                let api_clone = config.apikey.clone();
                 futures.push(tokio::spawn(async move {
                     get_weather_openweathermap(&api_clone, &loc).await
                 }));

@@ -92,6 +92,11 @@ impl Weather {
         }
     }
 
+    /// TODO: implememnt from str trait i guess
+    pub fn new_from_json(weather_json: String) -> Weather {
+        serde_json::from_str(&weather_json).unwrap()
+    }
+
     /// calculates the mean temp
     /// Callers resposability to have filtered the location of data!
     pub fn mean_temp(weather: &[Weather]) -> Option<f32> {
