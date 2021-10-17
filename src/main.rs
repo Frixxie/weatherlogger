@@ -36,7 +36,6 @@ struct Config {
     apikey: String,
     locations: Vec<String>,
     csvfile: String,
-    dbfile: String,
 }
 
 impl Config {
@@ -107,9 +106,9 @@ async fn main() -> Result<(), io::Error> {
             let mut futures = Vec::new();
             for loc in config.locations.clone() {
                 //needed for move
-                let api_clone = config.apikey.clone();
+                let apikey = config.apikey.clone();
                 futures.push(tokio::spawn(async move {
-                    get_weather_openweathermap(&api_clone, &loc).await
+                    get_weather_openweathermap(&apikey, &loc).await
                 }));
             }
 
