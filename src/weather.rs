@@ -1,15 +1,17 @@
 #![allow(dead_code)]
 use csv::Reader;
+use csv::Writer;
 use plotters::prelude::*;
 use rayon::prelude::*;
 use serde::Deserialize;
+use serde::Serialize;
 use std::cmp::PartialEq;
 use std::error::Error;
 use std::fmt;
 use std::path::Path;
 
 //TODO: Make use of rust error system
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Weather {
     dt: u32,
     name: String,
@@ -233,7 +235,6 @@ impl Weather {
             .unwrap();
     }
 
-
     pub fn read_from_csv(file: &Path) -> Result<Vec<Weather>, csv::Error> {
         let mut rdr = Reader::from_path(file).unwrap();
         let mut res = Vec::<Weather>::new();
@@ -246,9 +247,10 @@ impl Weather {
         Ok(res)
     }
 
-
     pub fn write_to_csv(&self, csvfile: &Path) -> Result<(), String> {
-        todo!()
+        let mut wtr = Writer::from_path(csvfile).unwrap();
+        wtr.serialize(self).unwrap();
+        Ok(())
     }
 }
 
@@ -332,5 +334,39 @@ mod tests {
         println!("{:?}", reses);
         let res = Weather::mean_temp(&reses).unwrap();
         assert_eq!(res, -5.77)
+    }
+
+    #[test]
+    fn test_write_csv() {
+        let file = PathBuf::from("test_log.csv");
+        let weather: Weather = Weather::new(
+            1615067637,
+            "Tromsø".to_string(),
+            "NO".to_string(),
+            18.957,
+            69.6496,
+            "Snow".to_string(),
+            "snow".to_string(),
+            "13n".to_string(),
+            1615009623,
+            1615046646,
+            90,
+            2.57,
+            170,
+            1100,
+            0.0,
+            0.0,
+            0.57,
+            0.0,
+            -6.0,
+            -5.56,
+            -5.77,
+            -10.35,
+            93,
+            999,
+        );
+        weather.write_to_csv(&file).unwrap();
+        let reses: Vec<Weather> = Weather::read_from_csv(&file).unwrap();
+        assert_eq!(weather, reses[0]);
     }
 }

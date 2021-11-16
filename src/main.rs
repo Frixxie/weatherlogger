@@ -27,6 +27,10 @@ struct Opt {
     ///Plot weather
     #[structopt(short, long)]
     plot_temp: bool,
+
+    ///Write to config
+    #[structopt(short, long)]
+    write_to_csv: bool,
 }
 
 /// Config struct
@@ -46,6 +50,7 @@ impl Config {
 }
 
 async fn get_weather_openweathermap(api: &str, loc: &str) -> weather::Weather {
+    //Gets the weather from openweathermap.com
     let url = format!(
         "https://api.openweathermap.org/data/2.5/weather?q={}&units=metric&appid={}",
         loc, api
@@ -55,6 +60,7 @@ async fn get_weather_openweathermap(api: &str, loc: &str) -> weather::Weather {
     //converting to json so it can be printed
     let v: Value = serde_json::from_str(&response).unwrap();
 
+    //returning the weather struct
     weather::Weather::new(
         v["dt"].as_u64().unwrap_or(0) as u32,
         v["name"].to_string(),
@@ -96,6 +102,7 @@ async fn main() -> Result<(), io::Error> {
     //Gets the current configuration
     let config = Arc::new(Config::new(opt.config_file).await.unwrap());
 
+    //Getting the location
     match opt.isp_loc {
         true => {
             let loc = get_city("http://ip-api.com/line/?fields=city").await;
@@ -112,17 +119,27 @@ async fn main() -> Result<(), io::Error> {
                 }));
             }
 
+            //Joining the futures
             let mut reses = Vec::<weather::Weather>::new();
-            //getting the results or something
             for future in futures {
                 reses.push(future.await?);
             }
 
-            for res in &reses {
-                println!("{}", res);
+            if opt.write_to_csv {
+                //writing to csv
+                for res in reses {
+                    res.write_to_csv(&PathBuf::from(&config.csvfile)).unwrap();
+                }
+            } else {
+                //printing to stdout
+                for res in reses {
+                    println!("{}", res);
+                }
             }
         }
     }
+
+    //plotting the weather
     if opt.plot_temp {
         let weathers =
             weather::Weather::read_from_csv(std::path::Path::new(&config.csvfile)).unwrap();
