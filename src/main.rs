@@ -1,6 +1,7 @@
 extern crate serde;
 mod weather;
 
+use futures::future::try_join_all;
 use reqwest::get;
 use serde::Deserialize;
 use serde_json::Value;
@@ -121,9 +122,14 @@ async fn main() -> Result<(), io::Error> {
 
             //Joining the futures
             let mut reses = Vec::<weather::Weather>::new();
-            for future in futures {
-                reses.push(future.await?);
-            }
+            //getting the results or something
+            try_join_all(futures)
+                .await
+                .unwrap()
+                .into_iter()
+                .for_each(|res| {
+                    reses.push(res);
+                });
 
             if opt.write_to_csv {
                 //writing to csv
