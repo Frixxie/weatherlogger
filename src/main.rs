@@ -121,15 +121,12 @@ async fn main() -> Result<(), io::Error> {
             }
 
             //Joining the futures
-            let mut reses = Vec::<weather::Weather>::new();
-            //getting the results or something
-            try_join_all(futures)
+            let reses: Vec<weather::Weather> = try_join_all(futures)
                 .await
                 .unwrap()
                 .into_iter()
-                .for_each(|res| {
-                    reses.push(res);
-                });
+                .map(|res| res)
+                .collect();
 
             if opt.write_to_csv {
                 //writing to csv
