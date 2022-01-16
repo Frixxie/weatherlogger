@@ -122,8 +122,7 @@ async fn main() -> Result<(), io::Error> {
 
             //Joining the futures
             let reses: Vec<weather::Weather> = try_join_all(futures)
-                .await
-                .unwrap()
+                .await?
                 .into_iter()
                 .map(|res| res)
                 .collect();
