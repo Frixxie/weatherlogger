@@ -24,14 +24,6 @@ struct Opt {
     ///Config file
     #[structopt(short, long, default_value = "./config.json")]
     config_file: PathBuf,
-
-    ///Plot weather
-    #[structopt(short, long)]
-    plot_temp: bool,
-
-    ///Write to config
-    #[structopt(short, long)]
-    write_to_csv: bool,
 }
 
 /// Config struct
@@ -40,7 +32,7 @@ struct Opt {
 struct Config {
     apikey: String,
     locations: Vec<String>,
-    csvfile: String,
+    dbconnectionstring: String,
 }
 
 impl Config {
@@ -103,58 +95,44 @@ async fn main() -> Result<(), io::Error> {
     //Gets the current configuration
     let config = Arc::new(Config::new(opt.config_file).await.unwrap());
 
+    let dbconnectionstring = config.dbconnectionstring.clone();
+    let client_options = mongodb::options::ClientOptions::parse(&dbconnectionstring)
+        .await
+        .unwrap();
+
+    let client = mongodb::Client::with_options(client_options).unwrap();
+    let db = client.database("weatherlogger");
+
     //Getting the location
-    match opt.isp_loc {
-        true => {
-            let loc = get_city("http://ip-api.com/line/?fields=city").await;
-            println!("{}", get_weather_openweathermap(&config.apikey, &loc).await);
+    if opt.isp_loc {
+        let loc = get_city("http://ip-api.com/line/?fields=city").await;
+        println!("{}", get_weather_openweathermap(&config.apikey, &loc).await);
+    } else {
+        //vector for containing the join_handles spawned from the tokio threads
+        let mut futures = Vec::new();
+        for loc in config.locations.clone() {
+            //needed for move
+            let apikey = config.apikey.clone();
+            futures.push(tokio::spawn(async move {
+                get_weather_openweathermap(&apikey, &loc).await
+            }));
         }
-        false => {
-            //vector for containing the join_handles spawned from the tokio threads
-            let mut futures = Vec::new();
-            for loc in config.locations.clone() {
-                //needed for move
-                let apikey = config.apikey.clone();
-                futures.push(tokio::spawn(async move {
-                    get_weather_openweathermap(&apikey, &loc).await
-                }));
-            }
 
-            //Joining the futures
-            let reses: Vec<weather::Weather> = try_join_all(futures)
-                .await?
-                .into_iter()
-                .map(|res| res)
-                .collect();
+        //Joining the futures
+        let reses: Vec<weather::Weather> = try_join_all(futures)
+            .await?
+            .into_iter()
+            .map(|res| res)
+            .collect();
 
-            if opt.write_to_csv {
-                //writing to csv
-                for res in reses {
-                    res.write_to_csv(&PathBuf::from(&config.csvfile)).unwrap();
-                }
-            } else {
-                //printing to stdout
-                for res in reses {
-                    println!("{}", res);
-                }
-            }
-        }
-    }
+        //printing to stdout
 
-    //plotting the weather
-    if opt.plot_temp {
-        let weathers =
-            weather::Weather::read_from_csv(std::path::Path::new(&config.csvfile)).unwrap();
-        println!("Getting locations");
-        let locations = weather::Weather::get_locations(&weathers);
-        println!("{:?}", locations);
-        for location in locations {
-            println!("Creating plot for location {}", location);
-            let tmp = weather::Weather::filter(&weathers, location.as_str());
-            weather::Weather::create_temp_plot(
-                &tmp,
-                std::path::Path::new(&format!("plots/{}_temp.png", &location.to_lowercase())),
-            );
+        //inserting into the database
+        let collection = db.collection::<weather::Weather>("weatherlog");
+        collection.insert_many(&reses, None).await.unwrap();
+
+        for res in &reses {
+            println!("{}", res);
         }
     }
     Ok(())
