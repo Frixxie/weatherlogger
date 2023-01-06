@@ -1,4 +1,3 @@
-extern crate serde;
 mod weather;
 
 use futures::future::try_join_all;
@@ -125,12 +124,11 @@ async fn main() -> Result<(), io::Error> {
             .map(|res| res)
             .collect();
 
-        //printing to stdout
-
         //inserting into the database
         let collection = db.collection::<weather::Weather>("weatherlog");
         collection.insert_many(&reses, None).await.unwrap();
 
+        //printing to stdout
         for res in &reses {
             println!("{}", res);
         }
