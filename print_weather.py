@@ -13,7 +13,7 @@ if __name__ == '__main__':
     db = client['weatherlogger']
     collection = db['weatherlog']
 
-    data = list(collection.find({"name": args.name}))
+    data = collection.find({"name": args.name})
 
     latest = max(data, key=lambda x: x['dt'])
 
@@ -22,4 +22,3 @@ if __name__ == '__main__':
     humidity = latest['humidity']
 
     print(f"{city},{temp}°C,{humidity}%")
-
