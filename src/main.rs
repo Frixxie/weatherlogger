@@ -52,33 +52,7 @@ async fn get_weather_openweathermap(api: &str, loc: &str) -> weather::Weather {
     //converting to json so it can be printed
     let v: Value = serde_json::from_str(&response).unwrap();
 
-    //returning the weather struct
-    weather::Weather::new(
-        v["dt"].as_u64().unwrap_or(0) as u32,
-        v["name"].to_string(),
-        v["sys"]["country"].to_string(),
-        v["coord"]["lon"].as_f64().unwrap_or(0.0) as f32,
-        v["coord"]["lat"].as_f64().unwrap_or(0.0) as f32,
-        v["weather"][0]["main"].to_string(),
-        v["weather"][0]["description"].to_string(),
-        v["weather"][0]["icon"].to_string(),
-        v["sys"]["sunrise"].as_u64().unwrap_or(0) as u32,
-        v["sys"]["sunset"].as_u64().unwrap_or(0) as u32,
-        v["clouds"]["all"].as_u64().unwrap_or(0) as u32,
-        v["wind"]["speed"].as_f64().unwrap_or(0.0) as f32,
-        v["wind"]["deg"].as_i64().unwrap_or(0) as i32,
-        v["visibility"].as_i64().unwrap_or(0) as i32,
-        v["rain"]["1h"].as_f64().unwrap_or(0.0) as f32,
-        v["rain"]["3h"].as_f64().unwrap_or(0.0) as f32,
-        v["snow"]["1h"].as_f64().unwrap_or(0.0) as f32,
-        v["snow"]["3h"].as_f64().unwrap_or(0.0) as f32,
-        v["main"]["temp_min"].as_f64().unwrap_or(0.0) as f32,
-        v["main"]["temp_max"].as_f64().unwrap_or(0.0) as f32,
-        v["main"]["temp"].as_f64().unwrap_or(0.0) as f32,
-        v["main"]["feels_like"].as_f64().unwrap_or(0.0) as f32,
-        v["main"]["humidity"].as_u64().unwrap_or(0) as u32,
-        v["main"]["pressure"].as_u64().unwrap_or(0) as u32,
-    )
+    v.try_into().unwrap()
 }
 
 /// Gets the city based on ip
@@ -99,8 +73,8 @@ async fn main() -> Result<(), io::Error> {
         .await
         .unwrap();
 
-    let client = mongodb::Client::with_options(client_options).unwrap();
-    let db = client.database("weatherlogger");
+    let db_client = mongodb::Client::with_options(client_options).unwrap();
+    let db = db_client.database("weatherlogger");
 
     //Getting the location
     if opt.isp_loc {
